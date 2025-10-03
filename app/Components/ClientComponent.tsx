@@ -1,27 +1,32 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
+import React, { useState } from "react";
 import {
   CircleMarker,
   MapContainer,
   Polyline,
   TileLayer,
   useMapEvents,
-  useMap,
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import { OpenStreetMapProvider, GeoSearchControl } from "leaflet-geosearch";
-import L from "leaflet";
-import "leaflet-geosearch/dist/geosearch.css";
+
+
+const SearchControl = dynamic<{}>(
+  () => import("./SearchControl").then((mod) => mod.default),
+  { ssr: false }
+);
 
 const tilesProviders = {
-  google: `https://mt1.google.com/vt/lyrs=r&x={x}&y={y}&z={z}`,
+  google: "https://mt1.google.com/vt/lyrs=r&x={x}&y={y}&z={z}",
   osm: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
 };
 
+type TileKeys = keyof typeof tilesProviders;
+
 export default function ClientComponent() {
   const [drawing, setDrawing] = useState(false);
-  const [polyPoints, setPolyPoints] = useState([]);
+  const [polyPoints, setPolyPoints] = useState<[number, number][]>([]);
   const [tileLayerUrl, setTileLayerUrl] = useState(tilesProviders.google);
 
   const startDrawing = () => {
@@ -101,7 +106,7 @@ export default function ClientComponent() {
             id="tile"
             className="w-full p-2 border"
             onChange={(e) => {
-              const selectedTile = e.target.value;
+              const selectedTile = e.target.value as TileKeys;
               const tileUrl = tilesProviders[selectedTile];
               if (tileUrl) {
                 setTileLayerUrl(tileUrl);
@@ -148,7 +153,13 @@ export default function ClientComponent() {
 }
 
 // Component to handle polyline drawing
-export function PolylineDrawer({ drawing, polyPoints, setPolyPoints }) {
+type PolylineDrawerProps = {
+  drawing: boolean;
+  polyPoints: [number, number][];
+  setPolyPoints: React.Dispatch<React.SetStateAction<[number, number][]>>;
+};
+
+export function PolylineDrawer({ drawing, polyPoints, setPolyPoints }: PolylineDrawerProps) {
   useMapEvents({
     click(e) {
       if (drawing) {
@@ -169,34 +180,3 @@ export function PolylineDrawer({ drawing, polyPoints, setPolyPoints }) {
   );
 }
 
-// Component to add search control
-function SearchControl() {
-  const map = useMap();
-
-  useEffect(() => {
-    const provider = new OpenStreetMapProvider();
-
-    const searchControl = GeoSearchControl({
-      provider,
-      style: "bar",
-      showMarker: true,
-      showPopup: true,
-      marker: {
-        icon: new L.Icon.Default(),
-        draggable: false,
-      },
-      popupFormat: ({ result }) => result.label,
-      maxMarkers: 1,
-      retainZoomLevel: false,
-      animateZoom: true,
-    });
-
-    map.addControl(searchControl);
-
-    return () => {
-      map.removeControl(searchControl);
-    };
-  }, [map]);
-
-  return null;
-}
