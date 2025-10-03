@@ -10,7 +10,7 @@ import {
   useMapEvents,
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-
+import { ToastContainer, toast } from 'react-toastify';
 
 const SearchControl = dynamic<{}>(
   () => import("./SearchControl").then((mod) => mod.default),
@@ -28,6 +28,7 @@ export default function MapComponent() {
   const [drawing, setDrawing] = useState(false);
   const [polyPoints, setPolyPoints] = useState<[number, number][]>([]);
   const [tileLayerUrl, setTileLayerUrl] = useState(tilesProviders.google);
+  const [toastId, setToastId] = useState<string | number | undefined>(undefined);
 
   const startDrawing = () => {
     setPolyPoints([]);
@@ -37,8 +38,38 @@ export default function MapComponent() {
   const finishDrawing = () => setDrawing(false);
   const clearPolyline = () => setPolyPoints([]);
 
+  const handleSelectTile = (e: { target: { value: string } }) => {
+    const selectedTile = e.target.value as TileKeys;
+    const tileUrl = tilesProviders[selectedTile];
+    if (tileUrl) {
+      setTileLayerUrl(tileUrl);
+    }
+  };
+
+  const showToast = (message: string, type: "success" | "error") => {
+    if (type === "success") {
+      toast.success(message, { autoClose: 2000, position:"bottom-right" });
+    } else {
+      toast.error(message, { autoClose: 2000, position:"bottom-right" });
+    }
+  }
+
+  const handleCopyToClipboard = async () => {
+    const coordText = polyPoints
+      .map((point) => `${point[0]}, ${point[1]}`)
+      .join("\n");
+
+    try {
+      await navigator.clipboard.writeText(coordText);
+      showToast("Coordinates copied to clipboard!", "success");
+    } catch (error) {
+      showToast("Failed to copy coordinates.", "error");
+    }
+  };
+
   return (
     <div style={{ display: "flex", height: "100vh", width: "100%" }}>
+      <ToastContainer  />
       {/* Map */}
       <div style={{ flex: 1, position: "relative" }}>
         <div
@@ -77,10 +108,7 @@ export default function MapComponent() {
           {/* <TileLayer
             url={`https://mt1.google.com/vt/lyrs=r&x={x}&y={y}&z={z}`}
           /> */}
-          <TileLayer
-            id="tileLayer"
-            url={tileLayerUrl}
-          />
+          <TileLayer id="tileLayer" url={tileLayerUrl} />
           <PolylineDrawer
             drawing={drawing}
             polyPoints={polyPoints}
@@ -105,13 +133,7 @@ export default function MapComponent() {
             name="tile"
             id="tile"
             className="w-full p-2 border"
-            onChange={(e) => {
-              const selectedTile = e.target.value as TileKeys;
-              const tileUrl = tilesProviders[selectedTile];
-              if (tileUrl) {
-                setTileLayerUrl(tileUrl);
-              }
-            }}
+            onChange={handleSelectTile}
           >
             <option value="google">Google Map</option>
             <option value="osm">Open Street Map</option>
@@ -122,18 +144,13 @@ export default function MapComponent() {
         <div className="mb-4">
           <button
             className="btn w-full"
-            onClick={() => {
-              const coordText = polyPoints
-                .map((point) => `${point[0]}, ${point[1]}`)
-                .join("\n");
-              navigator.clipboard.writeText(coordText);
-            }}
+            onClick={handleCopyToClipboard}
             disabled={polyPoints.length === 0}
           >
             Copy Coordinates
           </button>
         </div>
-        
+
         <h3>Coordinates</h3>
         <div>
           {polyPoints.length === 0 && <p>No points yet</p>}
@@ -159,7 +176,11 @@ type PolylineDrawerProps = {
   setPolyPoints: React.Dispatch<React.SetStateAction<[number, number][]>>;
 };
 
-export function PolylineDrawer({ drawing, polyPoints, setPolyPoints }: PolylineDrawerProps) {
+export function PolylineDrawer({
+  drawing,
+  polyPoints,
+  setPolyPoints,
+}: PolylineDrawerProps) {
   useMapEvents({
     click(e) {
       if (drawing) {
@@ -179,4 +200,3 @@ export function PolylineDrawer({ drawing, polyPoints, setPolyPoints }: PolylineD
     </>
   );
 }
-
