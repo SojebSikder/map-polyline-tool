@@ -1,17 +1,19 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
-  CircleMarker,
   MapContainer,
+  Marker,
   Polyline,
   TileLayer,
+  useMap,
   useMapEvents,
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import L from "leaflet";
 
 const SearchControl = dynamic<{}>(
   () => import("./SearchControl").then((mod) => mod.default),
@@ -74,6 +76,7 @@ export default function MapComponent() {
 
       {/* Map */}
       <div className="relative flex-1 h-[60vh] md:h-screen">
+        {/* Controls */}
         <div
           className="absolute top-2 left-12 z-[1000] bg-white p-2 rounded-lg shadow-md flex gap-2"
           style={{ pointerEvents: "auto" }}
@@ -109,6 +112,7 @@ export default function MapComponent() {
           </button>
         </div>
 
+        {/* Map Container */}
         <MapContainer
           center={[23.8103, 90.4125]}
           zoom={13}
@@ -121,6 +125,7 @@ export default function MapComponent() {
             setPolyPoints={setPolyPoints}
           />
           {isSearchcontrolEnable && <SearchControl />}
+          <CursorController drawing={drawing} />
         </MapContainer>
       </div>
 
@@ -187,14 +192,47 @@ export function PolylineDrawer({
     },
   });
 
+  const handleDrag = (index: number, newLat: number, newLng: number) => {
+    const updated = [...polyPoints];
+    updated[index] = [newLat, newLng];
+    setPolyPoints(updated);
+  };
+
   return (
     <>
       {polyPoints.length > 0 && (
         <Polyline positions={polyPoints} color="blue" />
       )}
+
       {polyPoints.map((point, i) => (
-        <CircleMarker key={i} center={point} radius={5} color="red" />
+        <Marker
+          key={i}
+          position={point}
+          draggable={true}
+          icon={L.divIcon({
+            html: `<div style="width:12px; height:12px; background:red; border-radius:50%; border:2px solid white;"></div>`,
+            iconSize: [12, 12],
+          })}
+          eventHandlers={{
+            dragend: (e) => {
+              const latlng = e.target.getLatLng();
+              handleDrag(i, latlng.lat, latlng.lng);
+            },
+          }}
+        />
       ))}
     </>
   );
+}
+
+function CursorController({ drawing }: { drawing: boolean }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!map) return;
+    const container = map.getContainer();
+    container.style.cursor = drawing ? "crosshair" : "grab";
+  }, [drawing, map]);
+
+  return null;
 }
