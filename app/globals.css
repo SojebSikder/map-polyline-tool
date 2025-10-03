@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+.btn {
+  @apply bg-blue-500 text-white font-bold py-2 px-4 rounded m-1;
+}
+
+.btn:hover {
+  @apply bg-blue-700;
+}
+.btn:active {
+  @apply bg-blue-900;
+}
+
+.btn:disabled {
+  @apply bg-gray-400 cursor-not-allowed;
+}
