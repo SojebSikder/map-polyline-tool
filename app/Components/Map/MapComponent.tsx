@@ -10,7 +10,8 @@ import {
   useMapEvents,
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import { ToastContainer, toast } from 'react-toastify';
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const SearchControl = dynamic<{}>(
   () => import("./SearchControl").then((mod) => mod.default),
@@ -28,7 +29,7 @@ export default function MapComponent() {
   const [drawing, setDrawing] = useState(false);
   const [polyPoints, setPolyPoints] = useState<[number, number][]>([]);
   const [tileLayerUrl, setTileLayerUrl] = useState(tilesProviders.google);
-  const [toastId, setToastId] = useState<string | number | undefined>(undefined);
+  const [isSearchcontrolEnable, setisSearchcontrolEnable] = useState(false);
 
   const startDrawing = () => {
     setPolyPoints([]);
@@ -48,11 +49,11 @@ export default function MapComponent() {
 
   const showToast = (message: string, type: "success" | "error") => {
     if (type === "success") {
-      toast.success(message, { autoClose: 2000, position:"bottom-right" });
+      toast.success(message, { autoClose: 2000, position: "bottom-right" });
     } else {
-      toast.error(message, { autoClose: 2000, position:"bottom-right" });
+      toast.error(message, { autoClose: 2000, position: "bottom-right" });
     }
-  }
+  };
 
   const handleCopyToClipboard = async () => {
     const coordText = polyPoints
@@ -68,34 +69,43 @@ export default function MapComponent() {
   };
 
   return (
-    <div style={{ display: "flex", height: "100vh", width: "100%" }}>
-      <ToastContainer  />
+    <div className="flex flex-col md:flex-row h-screen w-full">
+      <ToastContainer />
+
       {/* Map */}
-      <div style={{ flex: 1, position: "relative" }}>
+      <div className="relative flex-1 h-[60vh] md:h-screen">
         <div
-          style={{
-            position: "absolute",
-            top: 10,
-            left: 50,
-            zIndex: 1000,
-            background: "white",
-            padding: "10px",
-            borderRadius: "8px",
-            pointerEvents: "auto",
-          }}
+          className="absolute top-2 left-12 z-[1000] bg-white p-2 rounded-lg shadow-md flex gap-2"
+          style={{ pointerEvents: "auto" }}
         >
-          <button className="btn" onClick={startDrawing} disabled={drawing}>
+          <button
+            className="btn px-3 py-1 bg-blue-500 text-white rounded disabled:opacity-50"
+            onClick={startDrawing}
+            disabled={drawing}
+          >
             Start
           </button>
-          <button className="btn" onClick={finishDrawing} disabled={!drawing}>
+          <button
+            className="btn px-3 py-1 bg-green-500 text-white rounded disabled:opacity-50"
+            onClick={finishDrawing}
+            disabled={!drawing}
+          >
             Finish
           </button>
           <button
-            className="btn"
+            className="btn px-3 py-1 bg-red-500 text-white rounded disabled:opacity-50"
             onClick={clearPolyline}
             disabled={polyPoints.length === 0}
           >
             Clear
+          </button>
+          <button
+            className="btn px-3 py-1 bg-gray-500 text-white rounded"
+            onClick={() => {
+              setisSearchcontrolEnable(!isSearchcontrolEnable);
+            }}
+          >
+            Search
           </button>
         </div>
 
@@ -104,35 +114,24 @@ export default function MapComponent() {
           zoom={13}
           style={{ height: "100%", width: "100%" }}
         >
-          {/* <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" /> */}
-          {/* <TileLayer
-            url={`https://mt1.google.com/vt/lyrs=r&x={x}&y={y}&z={z}`}
-          /> */}
           <TileLayer id="tileLayer" url={tileLayerUrl} />
           <PolylineDrawer
             drawing={drawing}
             polyPoints={polyPoints}
             setPolyPoints={setPolyPoints}
           />
-          <SearchControl />
+          {isSearchcontrolEnable && <SearchControl />}
         </MapContainer>
       </div>
 
-      {/* Right Sidebar */}
-      <div
-        style={{
-          width: "300px",
-          padding: "10px",
-          background: "#f5f5f5",
-          overflowY: "auto",
-        }}
-      >
+      {/* Sidebar */}
+      <div className="w-full md:w-[300px] p-4 bg-gray-100 overflow-y-auto">
         <div className="mb-4">
-          <label htmlFor="">Select Map tile:</label>
+          <label className="mb-1 hidden md:block">Select Map Tile:</label>
           <select
             name="tile"
             id="tile"
-            className="w-full p-2 border"
+            className="w-full p-2 border rounded"
             onChange={handleSelectTile}
           >
             <option value="google">Google Map</option>
@@ -140,10 +139,9 @@ export default function MapComponent() {
           </select>
         </div>
 
-        {/* Copy button */}
-        <div className="mb-4">
+        <div className="mb-1">
           <button
-            className="btn w-full"
+            className="btn w-full px-3 py-2 bg-indigo-500 text-white rounded disabled:opacity-50"
             onClick={handleCopyToClipboard}
             disabled={polyPoints.length === 0}
           >
@@ -151,15 +149,15 @@ export default function MapComponent() {
           </button>
         </div>
 
-        <h3>Coordinates</h3>
-        <div>
-          {polyPoints.length === 0 && <p>No points yet</p>}
-          <ul>
+        <h3 className="font-semibold mb-2">Coordinates</h3>
+        <div className="max-h-[100px] md:max-h-[400px] lg:max-h-[600px] overflow-y-auto border p-2 rounded bg-white">
+          {polyPoints.length === 0 && (
+            <p className="text-gray-500">No points yet</p>
+          )}
+          <ul className="text-sm">
             {polyPoints.map((point, i) => (
-              <li key={i}>
-                {/* {i + 1}: Lat {point[0].toFixed(6)}, Lng {point[1].toFixed(6)} */}
+              <li key={i} className="border-b py-1">
                 {point[0]}, {point[1]}
-                <hr />
               </li>
             ))}
           </ul>
@@ -169,7 +167,7 @@ export default function MapComponent() {
   );
 }
 
-// Component to handle polyline drawing
+// Polyline Drawer
 type PolylineDrawerProps = {
   drawing: boolean;
   polyPoints: [number, number][];
