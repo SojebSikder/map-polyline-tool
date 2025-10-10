@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   MapContainer,
   Marker,
@@ -16,7 +16,9 @@ import "react-toastify/dist/ReactToastify.css";
 import L from "leaflet";
 import HoverLocationPopup from "./HoverLocationPopup";
 import RouteControl from "./RouteControl";
-import LocationSearchInput from "./LocationSearchInput";
+import LocationSearchInput, {
+  LocationSearchInputRef,
+} from "./LocationSearchInput";
 
 const SearchControl = dynamic<{}>(
   () => import("./SearchControl").then((mod) => mod.default),
@@ -39,10 +41,20 @@ export default function MapComponent() {
   const [start, setStart] = useState<[number, number] | null>(null);
   const [end, setEnd] = useState<[number, number] | null>(null);
 
+  const sourceRef = useRef<LocationSearchInputRef>(null);
+  const destRef = useRef<LocationSearchInputRef>(null);
+
   // useEffect(() => {
   //   setStart([23.82597333058035, 90.4265195131302]);
   //   setEnd([23.823917178929722, 90.42936265468597]);
   // }, []);
+
+  const clearDirections = () => {
+    setStart(null);
+    setEnd(null);
+    sourceRef.current?.reset();
+    destRef.current?.reset();
+  };
 
   const startDrawing = () => {
     setPolyPoints([]);
@@ -144,7 +156,7 @@ export default function MapComponent() {
 
       {/* Sidebar */}
       <div className="w-full md:w-[300px] p-4 bg-gray-100 overflow-y-auto">
-        <div className="mb-4">
+        <div className="mb-1">
           <label className="mb-1 hidden md:block">Select Map Tile:</label>
           <select
             name="tile"
@@ -160,16 +172,28 @@ export default function MapComponent() {
         <div className="mb-1">
           <label className="mb-1 hidden md:block">Source:</label>
           <LocationSearchInput
+            ref={sourceRef}
             placeholder="Search source..."
             onSelect={(coords, label) => setStart(coords)}
           />
         </div>
-        <div className="mb-4">
+        <div className="mb-1">
           <label className="mb-1 hidden md:block">Destination:</label>
           <LocationSearchInput
+            ref={destRef}
             placeholder="Search destination..."
             onSelect={(coords, label) => setEnd(coords)}
           />
+        </div>
+
+        <div className="mb-1">
+          <button
+            className="btn w-full px-3 py-2 bg-purple-500 text-white rounded disabled:opacity-50"
+            onClick={clearDirections}
+            disabled={!start && !end}
+          >
+            Clear Directions
+          </button>
         </div>
 
         <div className="mb-1">
