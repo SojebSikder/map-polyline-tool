@@ -212,8 +212,33 @@ export function PolylineDrawer({
           position={point}
           draggable={true}
           icon={L.divIcon({
-            html: `<div style="width:12px; height:12px; background:red; border-radius:50%; border:2px solid white;"></div>`,
-            iconSize: [12, 12],
+            html: `
+              <div style="position: relative; display: flex; align-items: center; justify-content: center;">
+                <div style="
+                  width: 12px;
+                  height: 12px;
+                  background: red;
+                  border-radius: 50%;
+                  border: 2px solid white;
+                "></div>
+                <div style="
+                  position: absolute;
+                  top: -22px;
+                  background: white;
+                  color: black;
+                  font-size: 12px;
+                  font-weight: bold;
+                  padding: 1px 4px;
+                  border-radius: 4px;
+                  border: 1px solid #ccc;
+                  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+                ">
+                  ${i + 1}
+                </div>
+              </div>
+            `,
+            iconSize: [20, 20],
+            className: "custom-marker",
           })}
           eventHandlers={{
             dragend: (e) => {
@@ -226,6 +251,7 @@ export function PolylineDrawer({
     </>
   );
 }
+
 
 function CursorController({ drawing }: { drawing: boolean }) {
   const map = useMap();
