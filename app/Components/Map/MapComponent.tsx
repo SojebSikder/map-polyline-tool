@@ -15,6 +15,8 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import L from "leaflet";
 import HoverLocationPopup from "./HoverLocationPopup";
+import RouteControl from "./RouteControl";
+import LocationSearchInput from "./LocationSearchInput";
 
 const SearchControl = dynamic<{}>(
   () => import("./SearchControl").then((mod) => mod.default),
@@ -33,6 +35,14 @@ export default function MapComponent() {
   const [polyPoints, setPolyPoints] = useState<[number, number][]>([]);
   const [tileLayerUrl, setTileLayerUrl] = useState(tilesProviders.google);
   const [isSearchcontrolEnable, setisSearchcontrolEnable] = useState(false);
+
+  const [start, setStart] = useState<[number, number] | null>(null);
+  const [end, setEnd] = useState<[number, number] | null>(null);
+
+  // useEffect(() => {
+  //   setStart([23.82597333058035, 90.4265195131302]);
+  //   setEnd([23.823917178929722, 90.42936265468597]);
+  // }, []);
 
   const startDrawing = () => {
     setPolyPoints([]);
@@ -126,8 +136,9 @@ export default function MapComponent() {
             setPolyPoints={setPolyPoints}
           />
           {isSearchcontrolEnable && <SearchControl />}
+          <RouteControl start={start} end={end} />
           <CursorController drawing={drawing} />
-          <HoverLocationPopup />
+          {/* <HoverLocationPopup /> */}
         </MapContainer>
       </div>
 
@@ -144,6 +155,21 @@ export default function MapComponent() {
             <option value="google">Google Map</option>
             <option value="osm">Open Street Map</option>
           </select>
+        </div>
+
+        <div className="mb-1">
+          <label className="mb-1 hidden md:block">Source:</label>
+          <LocationSearchInput
+            placeholder="Search source..."
+            onSelect={(coords, label) => setStart(coords)}
+          />
+        </div>
+        <div className="mb-4">
+          <label className="mb-1 hidden md:block">Destination:</label>
+          <LocationSearchInput
+            placeholder="Search destination..."
+            onSelect={(coords, label) => setEnd(coords)}
+          />
         </div>
 
         <div className="mb-1">
@@ -251,7 +277,6 @@ export function PolylineDrawer({
     </>
   );
 }
-
 
 function CursorController({ drawing }: { drawing: boolean }) {
   const map = useMap();

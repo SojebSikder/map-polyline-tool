@@ -11,10 +11,12 @@
   "dependencies": {
     "leaflet": "^1.9.4",
     "leaflet-geosearch": "^4.2.2",
+    "leaflet-routing-machine": "^3.2.12",
     "next": "15.3.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-leaflet": "^5.0.0",
+    "react-leaflet-routing-machine": "^0.0.5",
     "react-toastify": "^11.0.5"
   },
   "devDependencies": {
