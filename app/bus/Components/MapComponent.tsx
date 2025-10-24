@@ -7,6 +7,14 @@ import "leaflet/dist/leaflet.css";
 
 const API_BASE_URL = "http://localhost:8080";
 
+type BusData = {
+  coordinates?: [number, number][];
+  bus_lists?: string[];
+  fare?: number | null;
+  distance?: number | null;
+  travel_time?: number | null;
+};
+
 export default function MapComponent({
   title,
   description,
@@ -14,12 +22,11 @@ export default function MapComponent({
   title: string;
   description: string;
 }) {
-  const [source, setSource] = useState("khilkhet");
-  const [destination, setDestination] = useState("tongi");
-  const [coordinates, setCoordinates] = useState<[number, number][]>([]);
-  const [busList, setBusList] = useState<string[]>([]);
-  const [fare, setFare] = useState<number | null>(null);
+  const [source, setSource] = useState("Khilkhet (খিলক্ষেত)");
+  const [destination, setDestination] = useState("Khamar Bari (খামার বাড়ি)");
+  const [busData, setBusData] = useState<BusData>();
   const [theme, setTheme] = useState<"light" | "dark">("dark");
+  const [loading, setLoading] = useState(false);
 
   const [sourceSuggestions, setSourceSuggestions] = useState<any[]>([]);
   const [destinationSuggestions, setDestinationSuggestions] = useState<any[]>(
@@ -31,7 +38,6 @@ export default function MapComponent({
   const mapRef = useRef<any>(null);
   const [reqSent, setReqSent] = useState(false);
 
-  // Debounce helper
   const debounce = (fn: Function, delay = 300) => {
     let timeout: NodeJS.Timeout;
     return (...args: any[]) => {
@@ -74,7 +80,9 @@ export default function MapComponent({
     }
 
     try {
+      setLoading(true);
       setReqSent(true);
+
       const url = `${API_BASE_URL}/api/bus?source=${encodeURIComponent(
         source
       )}&destination=${encodeURIComponent(destination)}`;
@@ -87,15 +95,24 @@ export default function MapComponent({
 
       if (!coords || coords.length === 0) {
         showToast("No coordinates returned!", "error");
-        setCoordinates([]);
-        setFare(null);
-        setBusList([]);
+
+        setBusData({
+          fare: null,
+          coordinates: [],
+          bus_lists: [],
+          travel_time: null,
+          distance: null
+        });
         return;
       }
 
-      setCoordinates(coords);
-      setFare(data.data.fare);
-      setBusList(data.data.bus);
+      setBusData({
+        fare: data.data.fare,
+        coordinates: coords,
+        bus_lists: data.data.bus,
+        distance: data.data.distance / 1000,
+        travel_time: data.data.travel_time
+      });
       showToast("Route loaded successfully!", "success");
 
       if (mapRef.current) {
@@ -108,6 +125,8 @@ export default function MapComponent({
     } catch (error) {
       console.error(error);
       showToast("API call failed.", "error");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -252,27 +271,46 @@ export default function MapComponent({
           <button
             className={`w-full py-2 rounded-lg transition cursor-pointer active:${currentColors.activeButton} ${currentColors.button}`}
             onClick={handleGetFare}
+            disabled={loading}
           >
-            Get Fare
+            {loading ? "Loading..." : "Get Fare"}
           </button>
         </div>
 
-        {fare && (
+        {busData && busData.fare && (
           <div
             className={`mt-6 p-4 ${currentColors.bgPanel} rounded-lg border ${currentColors.borderPanel}`}
           >
-            <h2 className="font-semibold mb-2">Bus fare:</h2>
-            <pre className="text-sm">{fare}</pre>
+            <h2 className="font-semibold mb-2">Bus fare (tk):</h2>
+            <pre className="text-sm">{busData.fare}</pre>
           </div>
         )}
 
-        {busList.length > 0 && (
+        {busData && busData.distance && (
+          <div
+            className={`mt-6 p-4 ${currentColors.bgPanel} rounded-lg border ${currentColors.borderPanel}`}
+          >
+            <h2 className="font-semibold mb-2">Distance (km):</h2>
+            <pre className="text-sm">{busData.distance}</pre>
+          </div>
+        )}
+
+          {busData && busData.travel_time && (
+          <div
+            className={`mt-6 p-4 ${currentColors.bgPanel} rounded-lg border ${currentColors.borderPanel}`}
+          >
+            <h2 className="font-semibold mb-2">Travel time (minute):</h2>
+            <pre className="text-sm">{busData.travel_time}</pre>
+          </div>
+        )}
+
+        {busData && busData.bus_lists && busData.bus_lists.length > 0 && (
           <div
             className={`mt-6 p-4 ${currentColors.bgPanel} rounded-lg border ${currentColors.borderPanel}`}
           >
             <h2 className="font-semibold mb-2">Bus list:</h2>
             <ul className="list-disc pl-5">
-              {busList.map((bus, idx) => (
+              {busData.bus_lists.map((bus, idx) => (
                 <li key={idx} className="text-sm">
                   {bus}
                 </li>
@@ -281,13 +319,16 @@ export default function MapComponent({
           </div>
         )}
 
-        {reqSent && busList.length == 0 && (
-          <div
-            className={`mt-6 p-4 ${currentColors.bgPanel} rounded-lg border ${currentColors.borderPanel}`}
-          >
-            Nothing found!
-          </div>
-        )}
+        {reqSent &&
+          busData &&
+          busData.bus_lists &&
+          busData.bus_lists.length == 0 && (
+            <div
+              className={`mt-6 p-4 ${currentColors.bgPanel} rounded-lg border ${currentColors.borderPanel}`}
+            >
+              Nothing found!
+            </div>
+          )}
       </div>
 
       <div className="w-full max-w-4xl h-[600px] rounded-lg overflow-hidden shadow-lg">
@@ -301,8 +342,11 @@ export default function MapComponent({
             url={"https://mt1.google.com/vt/lyrs=r&x={x}&y={y}&z={z}"}
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           />
-          {coordinates.length > 0 && (
-            <Polyline positions={coordinates} color={currentColors.polyline} />
+          {busData && busData.coordinates && busData.coordinates.length > 0 && (
+            <Polyline
+              positions={busData.coordinates}
+              color={currentColors.polyline}
+            />
           )}
         </MapContainer>
       </div>
