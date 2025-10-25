@@ -187,25 +187,26 @@ export default function MapComponent({
 
   return (
     <div
-      className={`${currentColors.bgPage} min-h-screen flex items-center justify-center p-6`}
+      className={`${currentColors.bgPage} min-h-screen flex flex-col md:flex-row items-center justify-center p-4 md:p-6 gap-4`}
     >
+      {/* Left Panel */}
       <div
-        className={`${currentColors.bgCard} shadow-lg rounded-lg p-8 w-full max-w-lg mb-6 mr-4 ${currentColors.textCard}`}
+        className={`${currentColors.bgCard} shadow-lg rounded-lg p-6 w-full md:max-w-lg ${currentColors.textCard}`}
       >
         <div className="flex justify-between items-center mb-4">
           <h1
-            className={`text-3xl font-bold text-center ${currentColors.title}`}
+            className={`text-2xl md:text-3xl font-bold text-center ${currentColors.title}`}
           >
             {title}
           </h1>
           <button
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="ml-4 px-3 py-1 rounded-lg border border-gray-400 text-sm"
+            className="ml-2 px-3 py-1 rounded-lg border border-gray-400 text-sm"
           >
             {theme === "dark" ? "Light Mode" : "Dark Mode"}
           </button>
         </div>
-        <p className="text-gray-300 text-center mb-6">{description}</p>
+        <p className="text-gray-300 text-center mb-4 md:mb-6 text-sm md:text-base">{description}</p>
 
         <div className="space-y-4 relative">
           {/* Source Input */}
@@ -218,10 +219,10 @@ export default function MapComponent({
                 setSource(e.target.value);
                 debouncedFetchSource(e.target.value);
               }}
-              className={`w-full ${currentColors.bgInput} border ${currentColors.borderInput} rounded-lg p-2 ${currentColors.textInput} focus:outline-none focus:ring-2 focus:ring-blue-400`}
+              className={`w-full ${currentColors.bgInput} border ${currentColors.borderInput} rounded-lg p-2 text-sm md:text-base ${currentColors.textInput} focus:outline-none focus:ring-2 focus:ring-blue-400`}
             />
             {sourceSuggestions.length > 0 && (
-              <ul className="absolute z-10 w-full bg-white border border-gray-300 rounded-lg mt-1 max-h-40 overflow-auto text-black">
+              <ul className="absolute z-10 w-full bg-white border border-gray-300 rounded-lg mt-1 max-h-40 overflow-auto text-black text-sm">
                 {sourceSuggestions.map((s, idx) => (
                   <li
                     key={idx}
@@ -248,10 +249,10 @@ export default function MapComponent({
                 setDestination(e.target.value);
                 debouncedFetchDestination(e.target.value);
               }}
-              className={`w-full ${currentColors.bgInput} border ${currentColors.borderInput} rounded-lg p-2 ${currentColors.textInput} focus:outline-none focus:ring-2 focus:ring-blue-400`}
+              className={`w-full ${currentColors.bgInput} border ${currentColors.borderInput} rounded-lg p-2 text-sm md:text-base ${currentColors.textInput} focus:outline-none focus:ring-2 focus:ring-blue-400`}
             />
             {destinationSuggestions.length > 0 && (
-              <ul className="absolute z-10 w-full bg-white border border-gray-300 rounded-lg mt-1 max-h-40 overflow-auto text-black">
+              <ul className="absolute z-10 w-full bg-white border border-gray-300 rounded-lg mt-1 max-h-40 overflow-auto text-black text-sm">
                 {destinationSuggestions.map((d, idx) => (
                   <li
                     key={idx}
@@ -269,7 +270,7 @@ export default function MapComponent({
           </div>
 
           <button
-            className={`w-full py-2 rounded-lg transition cursor-pointer active:${currentColors.activeButton} ${currentColors.button}`}
+            className={`w-full py-2 rounded-lg transition cursor-pointer active:${currentColors.activeButton} ${currentColors.button} text-sm md:text-base`}
             onClick={handleGetFare}
             disabled={loading}
           >
@@ -277,61 +278,48 @@ export default function MapComponent({
           </button>
         </div>
 
+        {/* Info Panels */}
         {busData && busData.fare && (
-          <div
-            className={`mt-6 p-4 ${currentColors.bgPanel} rounded-lg border ${currentColors.borderPanel}`}
-          >
-            <h2 className="font-semibold mb-2">Bus fare (tk):</h2>
-            <pre className="text-sm">{busData.fare}</pre>
+          <div className={`mt-4 md:mt-6 p-3 md:p-4 ${currentColors.bgPanel} rounded-lg border ${currentColors.borderPanel}`}>
+            <h2 className="font-semibold mb-1 md:mb-2 text-sm md:text-base">Bus fare (tk):</h2>
+            <pre className="text-xs md:text-sm">{busData.fare}</pre>
           </div>
         )}
 
         {busData && busData.distance && (
-          <div
-            className={`mt-6 p-4 ${currentColors.bgPanel} rounded-lg border ${currentColors.borderPanel}`}
-          >
-            <h2 className="font-semibold mb-2">Distance (km):</h2>
-            <pre className="text-sm">{busData.distance}</pre>
+          <div className={`mt-4 md:mt-6 p-3 md:p-4 ${currentColors.bgPanel} rounded-lg border ${currentColors.borderPanel}`}>
+            <h2 className="font-semibold mb-1 md:mb-2 text-sm md:text-base">Distance (km):</h2>
+            <pre className="text-xs md:text-sm">{busData.distance}</pre>
           </div>
         )}
 
-          {busData && busData.travel_time && (
-          <div
-            className={`mt-6 p-4 ${currentColors.bgPanel} rounded-lg border ${currentColors.borderPanel}`}
-          >
-            <h2 className="font-semibold mb-2">Travel time (minute):</h2>
-            <pre className="text-sm">{busData.travel_time}</pre>
+        {busData && busData.travel_time && (
+          <div className={`mt-4 md:mt-6 p-3 md:p-4 ${currentColors.bgPanel} rounded-lg border ${currentColors.borderPanel}`}>
+            <h2 className="font-semibold mb-1 md:mb-2 text-sm md:text-base">Travel time (minute):</h2>
+            <pre className="text-xs md:text-sm">{busData.travel_time}</pre>
           </div>
         )}
 
         {busData && busData.bus_lists && busData.bus_lists.length > 0 && (
-          <div
-            className={`mt-6 p-4 ${currentColors.bgPanel} rounded-lg border ${currentColors.borderPanel}`}
-          >
-            <h2 className="font-semibold mb-2">Bus list:</h2>
-            <ul className="list-disc pl-5">
+          <div className={`mt-4 md:mt-6 p-3 md:p-4 ${currentColors.bgPanel} rounded-lg border ${currentColors.borderPanel}`}>
+            <h2 className="font-semibold mb-1 md:mb-2 text-sm md:text-base">Bus list:</h2>
+            <ul className="list-disc pl-5 text-xs md:text-sm">
               {busData.bus_lists.map((bus, idx) => (
-                <li key={idx} className="text-sm">
-                  {bus}
-                </li>
+                <li key={idx}>{bus}</li>
               ))}
             </ul>
           </div>
         )}
 
-        {reqSent &&
-          busData &&
-          busData.bus_lists &&
-          busData.bus_lists.length == 0 && (
-            <div
-              className={`mt-6 p-4 ${currentColors.bgPanel} rounded-lg border ${currentColors.borderPanel}`}
-            >
-              Nothing found!
-            </div>
-          )}
+        {reqSent && busData && busData.bus_lists && busData.bus_lists.length === 0 && (
+          <div className={`mt-4 md:mt-6 p-3 md:p-4 ${currentColors.bgPanel} rounded-lg border ${currentColors.borderPanel}`}>
+            Nothing found!
+          </div>
+        )}
       </div>
 
-      <div className="w-full max-w-4xl h-[600px] rounded-lg overflow-hidden shadow-lg">
+      {/* Right Panel - Map */}
+      <div className="w-full md:max-w-4xl h-64 md:h-[600px] rounded-lg overflow-hidden shadow-lg">
         <MapContainer
           center={[23.8103, 90.4125]}
           zoom={13}
