@@ -4,6 +4,7 @@ import { showToast } from "@/helper/toast";
 import { useState, useRef, useEffect } from "react";
 import { MapContainer, TileLayer, Polyline } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
+import { ToastContainer } from "react-toastify";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -101,7 +102,7 @@ export default function MapComponent({
           coordinates: [],
           bus_lists: [],
           travel_time: null,
-          distance: null
+          distance: null,
         });
         return;
       }
@@ -111,9 +112,9 @@ export default function MapComponent({
         coordinates: coords,
         bus_lists: data.data.bus,
         distance: data.data.distance / 1000,
-        travel_time: data.data.travel_time
+        travel_time: data.data.travel_time,
       });
-      showToast("Route loaded successfully!", "success");
+      showToast("Route fetched successfully!", "success");
 
       if (mapRef.current) {
         const map = mapRef.current;
@@ -122,9 +123,8 @@ export default function MapComponent({
         );
         map.fitBounds(latLngs as any, { padding: [50, 50] });
       }
-    } catch (error) {
-      console.error(error);
-      showToast("API call failed.", "error");
+    } catch (error: any) {
+      showToast(error.message, "error");
     } finally {
       setLoading(false);
     }
@@ -189,6 +189,7 @@ export default function MapComponent({
     <div
       className={`${currentColors.bgPage} min-h-screen flex flex-col md:flex-row items-center justify-center p-4 md:p-6 gap-4`}
     >
+      <ToastContainer />
       {/* Left Panel */}
       <div
         className={`${currentColors.bgCard} shadow-lg rounded-lg p-6 w-full md:max-w-lg ${currentColors.textCard}`}
@@ -206,7 +207,9 @@ export default function MapComponent({
             {theme === "dark" ? "Light Mode" : "Dark Mode"}
           </button>
         </div>
-        <p className="text-gray-300 text-center mb-4 md:mb-6 text-sm md:text-base">{description}</p>
+        <p className="text-gray-300 text-center mb-4 md:mb-6 text-sm md:text-base">
+          {description}
+        </p>
 
         <div className="space-y-4 relative">
           {/* Source Input */}
@@ -280,29 +283,45 @@ export default function MapComponent({
 
         {/* Info Panels */}
         {busData && busData.fare && (
-          <div className={`mt-4 md:mt-6 p-3 md:p-4 ${currentColors.bgPanel} rounded-lg border ${currentColors.borderPanel}`}>
-            <h2 className="font-semibold mb-1 md:mb-2 text-sm md:text-base">Bus fare (tk):</h2>
+          <div
+            className={`mt-4 md:mt-6 p-3 md:p-4 ${currentColors.bgPanel} rounded-lg border ${currentColors.borderPanel}`}
+          >
+            <h2 className="font-semibold mb-1 md:mb-2 text-sm md:text-base">
+              Bus fare (tk):
+            </h2>
             <pre className="text-xs md:text-sm">{busData.fare}</pre>
           </div>
         )}
 
         {busData && busData.distance && (
-          <div className={`mt-4 md:mt-6 p-3 md:p-4 ${currentColors.bgPanel} rounded-lg border ${currentColors.borderPanel}`}>
-            <h2 className="font-semibold mb-1 md:mb-2 text-sm md:text-base">Distance (km):</h2>
+          <div
+            className={`mt-4 md:mt-6 p-3 md:p-4 ${currentColors.bgPanel} rounded-lg border ${currentColors.borderPanel}`}
+          >
+            <h2 className="font-semibold mb-1 md:mb-2 text-sm md:text-base">
+              Distance (km):
+            </h2>
             <pre className="text-xs md:text-sm">{busData.distance}</pre>
           </div>
         )}
 
         {busData && busData.travel_time && (
-          <div className={`mt-4 md:mt-6 p-3 md:p-4 ${currentColors.bgPanel} rounded-lg border ${currentColors.borderPanel}`}>
-            <h2 className="font-semibold mb-1 md:mb-2 text-sm md:text-base">Travel time (minute):</h2>
+          <div
+            className={`mt-4 md:mt-6 p-3 md:p-4 ${currentColors.bgPanel} rounded-lg border ${currentColors.borderPanel}`}
+          >
+            <h2 className="font-semibold mb-1 md:mb-2 text-sm md:text-base">
+              Travel time (minute):
+            </h2>
             <pre className="text-xs md:text-sm">{busData.travel_time}</pre>
           </div>
         )}
 
         {busData && busData.bus_lists && busData.bus_lists.length > 0 && (
-          <div className={`mt-4 md:mt-6 p-3 md:p-4 ${currentColors.bgPanel} rounded-lg border ${currentColors.borderPanel}`}>
-            <h2 className="font-semibold mb-1 md:mb-2 text-sm md:text-base">Bus list:</h2>
+          <div
+            className={`mt-4 md:mt-6 p-3 md:p-4 ${currentColors.bgPanel} rounded-lg border ${currentColors.borderPanel}`}
+          >
+            <h2 className="font-semibold mb-1 md:mb-2 text-sm md:text-base">
+              Bus list:
+            </h2>
             <ul className="list-disc pl-5 text-xs md:text-sm">
               {busData.bus_lists.map((bus, idx) => (
                 <li key={idx}>{bus}</li>
@@ -311,11 +330,16 @@ export default function MapComponent({
           </div>
         )}
 
-        {reqSent && busData && busData.bus_lists && busData.bus_lists.length === 0 && (
-          <div className={`mt-4 md:mt-6 p-3 md:p-4 ${currentColors.bgPanel} rounded-lg border ${currentColors.borderPanel}`}>
-            Nothing found!
-          </div>
-        )}
+        {reqSent &&
+          busData &&
+          busData.bus_lists &&
+          busData.bus_lists.length === 0 && (
+            <div
+              className={`mt-4 md:mt-6 p-3 md:p-4 ${currentColors.bgPanel} rounded-lg border ${currentColors.borderPanel}`}
+            >
+              Nothing found!
+            </div>
+          )}
       </div>
 
       {/* Right Panel - Map */}
