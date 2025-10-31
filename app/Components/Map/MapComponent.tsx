@@ -22,7 +22,7 @@ import LocationSearchInput, {
 
 const SearchControl = dynamic<{}>(
   () => import("./SearchControl").then((mod) => mod.default),
-  { ssr: false }
+  { ssr: false },
 );
 
 const tilesProviders = {
@@ -214,7 +214,7 @@ export default function MapComponent() {
           <ul className="text-sm">
             {polyPoints.map((point, i) => (
               <li key={i} className="border-b py-1">
-                {point[0]}, {point[1]}
+                ({i + 1}) {point[0]}, {point[1]}
               </li>
             ))}
           </ul>
