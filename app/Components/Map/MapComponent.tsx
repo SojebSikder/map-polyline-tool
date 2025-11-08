@@ -22,7 +22,7 @@ import LocationSearchInput, {
 
 const SearchControl = dynamic<{}>(
   () => import("./SearchControl").then((mod) => mod.default),
-  { ssr: false },
+  { ssr: false }
 );
 
 const tilesProviders = {
@@ -33,10 +33,16 @@ const tilesProviders = {
 type TileKeys = keyof typeof tilesProviders;
 
 export default function MapComponent() {
+  const mapRef = useRef<any>(null);
   const [drawing, setDrawing] = useState(false);
   const [polyPoints, setPolyPoints] = useState<[number, number][]>([]);
   const [tileLayerUrl, setTileLayerUrl] = useState(tilesProviders.google);
-  const [isSearchcontrolEnable, setisSearchcontrolEnable] = useState(false);
+  const [isSearchcontrolEnable, setIsSearchcontrolEnable] = useState(false);
+
+  // For reverse geocoding control
+  const [isReverseSearchcontrolEnable, setIsReverseSearchcontrolEnable] =
+    useState(false);
+  const [coordinateInput, setCoordinateInput] = useState("");
 
   const [start, setStart] = useState<[number, number] | null>(null);
   const [end, setEnd] = useState<[number, number] | null>(null);
@@ -48,6 +54,30 @@ export default function MapComponent() {
   //   setStart([23.82597333058035, 90.4265195131302]);
   //   setEnd([23.823917178929722, 90.42936265468597]);
   // }, []);
+
+  const handleSetCoordinates = () => {
+    const parts = coordinateInput.split(",").map((part) => part.trim());
+    if (parts.length !== 2) {
+      showToast("Invalid coordinate format. Use 'lat, lng'.", "error");
+      return;
+    }
+
+    const lat = parseFloat(parts[0]);
+    const lng = parseFloat(parts[1]);
+
+    if (isNaN(lat) || isNaN(lng)) {
+      showToast("Invalid latitude or longitude values.", "error");
+      return;
+    }
+
+    if (mapRef.current) {
+      const map = mapRef.current;
+      const latLngs = [[lat, lng]];
+      map.fitBounds(latLngs as any, { padding: [50, 50] });
+    }
+
+    setPolyPoints((prev) => [...prev, [lat, lng]]);
+  };
 
   const clearDirections = () => {
     setStart(null);
@@ -101,38 +131,65 @@ export default function MapComponent() {
       <div className="relative flex-1 h-[60vh] md:h-screen">
         {/* Controls */}
         <div
-          className="absolute top-2 left-12 z-[1000] bg-white p-2 rounded-lg shadow-md flex gap-2"
+          className="absolute top-2 left-12 z-[1000] bg-white p-2 rounded-lg shadow-md flex flex-col gap-2"
           style={{ pointerEvents: "auto" }}
         >
-          <button
-            className="btn px-3 py-1 bg-blue-500 text-white rounded disabled:opacity-50"
-            onClick={startDrawing}
-            disabled={drawing}
-          >
-            Start
-          </button>
-          <button
-            className="btn px-3 py-1 bg-green-500 text-white rounded disabled:opacity-50"
-            onClick={finishDrawing}
-            disabled={!drawing}
-          >
-            Finish
-          </button>
-          <button
-            className="btn px-3 py-1 bg-red-500 text-white rounded disabled:opacity-50"
-            onClick={clearPolyline}
-            disabled={polyPoints.length === 0}
-          >
-            Clear
-          </button>
-          <button
-            className="btn px-3 py-1 bg-gray-500 text-white rounded"
-            onClick={() => {
-              setisSearchcontrolEnable(!isSearchcontrolEnable);
-            }}
-          >
-            Search
-          </button>
+          <div className="flex gap-2">
+            <button
+              className="btn px-3 py-1 bg-blue-500 text-white rounded disabled:opacity-50"
+              onClick={startDrawing}
+              disabled={drawing}
+            >
+              Start
+            </button>
+            <button
+              className="btn px-3 py-1 bg-green-500 text-white rounded disabled:opacity-50"
+              onClick={finishDrawing}
+              disabled={!drawing}
+            >
+              Finish
+            </button>
+            <button
+              className="btn px-3 py-1 bg-red-500 text-white rounded disabled:opacity-50"
+              onClick={clearPolyline}
+              disabled={polyPoints.length === 0}
+            >
+              Clear
+            </button>
+            <button
+              className="btn px-3 py-1 bg-gray-500 text-white rounded"
+              onClick={() => {
+                setIsSearchcontrolEnable(!isSearchcontrolEnable);
+              }}
+            >
+              Search
+            </button>
+            <button
+              className="btn px-3 py-1 bg-gray-500 text-white rounded"
+              onClick={() => {
+                setIsReverseSearchcontrolEnable(!isReverseSearchcontrolEnable);
+              }}
+            >
+              Reverse
+            </button>
+          </div>
+
+          {isReverseSearchcontrolEnable && (
+            <div className="flex">
+              <input
+                onChange={(e) => setCoordinateInput(e.target.value)}
+                className="p-1 w-full border rounded"
+                type="text"
+                placeholder="Enter coordinates"
+              />
+              <button
+                onClick={handleSetCoordinates}
+                className="btn px-3 py-1 bg-gray-500 text-white rounded"
+              >
+                GO
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Map Container */}
@@ -140,6 +197,7 @@ export default function MapComponent() {
           center={[23.8103, 90.4125]}
           zoom={13}
           style={{ height: "100%", width: "100%" }}
+          ref={mapRef}
         >
           <TileLayer id="tileLayer" url={tileLayerUrl} />
           <PolylineDrawer
