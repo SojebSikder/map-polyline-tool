@@ -167,6 +167,7 @@ export default function MapComponent() {
             <button
               className="btn px-3 py-1 bg-gray-500 text-white rounded"
               onClick={() => {
+                setCoordinateInput("");
                 setIsReverseSearchcontrolEnable(!isReverseSearchcontrolEnable);
               }}
             >
